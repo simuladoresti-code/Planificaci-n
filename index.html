@@ -3,459 +3,926 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planner</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<title>Logistics AI Pro 6.0</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
-body{
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:#eef2f7;
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg0:#080c14;--bg1:#0d1321;--bg2:#111827;--bg3:#1a2235;--bg4:#1f2b3e;
+  --border:#1e2d45;--border2:#253650;
+  --blue:#3b82f6;--blue2:#60a5fa;--blue3:#1d4ed8;
+  --green:#10b981;--green2:#34d399;
+  --amber:#f59e0b;--amber2:#fbbf24;
+  --red:#ef4444;--red2:#f87171;
+  --purple:#8b5cf6;--cyan:#06b6d4;
+  --text1:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --radius:8px;
 }
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:var(--bg0);color:var(--text1);height:100vh;overflow:hidden;display:flex;flex-direction:column}
 
-.header{
-    height:65px;
-    background:linear-gradient(90deg,#0f172a,#1e293b);
-    color:white;
-    padding:0 25px;
-    display:flex;
-    align-items:center;
-    font-size:20px;
-    font-weight:bold;
-}
+/* ── TOPBAR ── */
+.topbar{height:52px;background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;z-index:2000}
+.brand{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--blue2);letter-spacing:-.4px;margin-right:4px}
+.brand-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--blue3),var(--blue));display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.brand-ver{font-size:10px;background:#1d4ed833;color:var(--blue2);padding:2px 6px;border-radius:10px;font-weight:600;margin-left:2px}
+.sep{width:1px;height:18px;background:var(--border2)}
+.tbtn{padding:5px 11px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text1);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;font-weight:500}
+.tbtn:hover{background:var(--bg4);border-color:var(--blue)}
+.tbtn.accent{background:var(--blue3);border-color:var(--blue);color:#fff}
+.tbtn.accent:hover{background:var(--blue)}
+.tbtn.ok{background:#065f4633;border-color:var(--green);color:var(--green2)}
+.tbtn.ok:hover{background:#065f4655}
+.tbtn.danger{background:#7f1d1d33;border-color:var(--red);color:var(--red2)}
+.tbtn:disabled{opacity:.4;cursor:not-allowed}
+.ml{margin-left:auto}
+.pill{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);padding:4px 9px;border-radius:20px;background:var(--bg3);border:1px solid var(--border)}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-.kpis{
-    display:flex;
-    gap:12px;
-    padding:12px;
-    background:white;
-    border-bottom:1px solid #ddd;
-}
+/* ── WORKSPACE ── */
+.ws{display:grid;grid-template-columns:320px 1fr 0px;height:calc(100vh - 52px);transition:grid-template-columns .25s ease;overflow:hidden}
+.ws.no-left{grid-template-columns:0px 1fr 0px}
+.ws.with-right{grid-template-columns:320px 1fr 300px}
+.ws.no-left.with-right{grid-template-columns:0px 1fr 300px}
 
-.kpi{
-    flex:1;
-    background:#ffffff;
-    border-radius:14px;
-    padding:15px;
-    box-shadow:0 4px 12px rgba(0,0,0,.05);
-    text-align:center;
-    font-weight:bold;
-}
+/* ── SIDEBAR LEFT ── */
+.sl{background:var(--bg1);border-right:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column}
+.sl-inner{width:320px;height:100%;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.sl-inner::-webkit-scrollbar{width:3px}
+.sl-inner::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-.layout{
-    display:grid;
-    grid-template-columns:380px 1fr;
-    height:calc(100vh - 125px);
-}
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:11px 12px}
+.card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-title svg{width:13px;height:13px;flex-shrink:0}
 
-.sidebar{
-    background:#1e293b;
-    padding:20px;
-    overflow:auto;
-    color:white;
-}
+/* ── UPLOAD ── */
+.drop{border:2px dashed var(--border2);border-radius:8px;padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--bg1)}
+.drop:hover,.drop.over{border-color:var(--blue);background:#1d4ed811}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-ico{font-size:22px;margin-bottom:5px}
+.drop-t{font-size:12px;font-weight:600;color:var(--text1);margin-bottom:2px}
+.drop-s{font-size:10px;color:var(--text3)}
 
-#map{
-    width:100%;
-    height:100%;
-}
+/* ── CONTROLS ── */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.lbl{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.3px}
+input[type=number],input[type=time],input[type=text],select{width:100%;padding:6px 9px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text1);font-size:12px;outline:none;transition:border-color .15s;font-family:inherit}
+input:focus,select:focus{border-color:var(--blue)}
+select option{background:var(--bg3)}
 
-.section{
-    background:#273549;
-    border-radius:14px;
-    padding:15px;
-    margin-bottom:15px;
-}
+/* ── KPI STRIP ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.kpi{background:var(--bg1);border:1px solid var(--border);border-radius:8px;padding:9px 7px;text-align:center}
+.kpi-v{font-size:18px;font-weight:800;color:var(--blue2);line-height:1;margin-bottom:2px}
+.kpi-l{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
 
-label{
-    display:block;
-    margin:8px 0;
-    color:#cbd5e1;
-    font-weight:bold;
-}
+/* ── PROGRESS ── */
+.prog-wrap{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin:6px 0}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue3),var(--blue2));border-radius:2px;width:0;transition:width .35s ease}
 
-input{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:10px;
-    margin-bottom:10px;
-    background:#334155;
-    color:white;
-}
+/* ── ROUTE LIST ── */
+.rlist{display:flex;flex-direction:column;gap:3px;max-height:240px;overflow-y:auto}
+.rlist::-webkit-scrollbar{width:3px}
+.rlist::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.ritem{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;cursor:pointer;transition:background .12s;border:1px solid transparent}
+.ritem:hover{background:var(--bg3)}
+.ritem.active{background:var(--bg4);border-color:var(--border2)}
+.ritem-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.ritem-info{flex:1;min-width:0}
+.ritem-name{font-size:12px;font-weight:600;color:var(--text1)}
+.ritem-meta{font-size:10px;color:var(--text3);margin-top:1px}
+.rbadge{font-size:9px;padding:2px 6px;border-radius:8px;font-weight:700}
 
-button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:10px;
-    margin-bottom:10px;
-    background:#2563eb;
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-}
+/* ── MAP CENTER ── */
+.map-wrap{position:relative;overflow:hidden}
+#map{width:100%;height:100%}
 
-button:hover{
-    background:#1d4ed8;
-}
+/* ── MAP OVERLAYS ── */
+.map-bottom{position:absolute;bottom:14px;left:14px;z-index:900;display:flex;gap:8px;align-items:flex-end}
+.stat-bar{background:#0d132199;backdrop-filter:blur(12px);border:1px solid var(--border2);border-radius:10px;padding:9px 14px;display:flex;gap:14px}
+.sbi{text-align:center}
+.sbi-v{font-size:13px;font-weight:800;color:var(--blue2)}
+.sbi-l{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+.sbi+.sbi{border-left:1px solid var(--border2);padding-left:14px}
 
-.btn-green{
-    background:#16a34a;
-}
+.map-top-right{position:absolute;top:10px;right:10px;z-index:900;display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.map-btn{background:#0d132199;backdrop-filter:blur(12px);border:1px solid var(--border2);border-radius:7px;padding:7px 10px;font-size:11px;cursor:pointer;color:var(--text1);display:flex;align-items:center;gap:5px;transition:all .15s}
+.map-btn:hover{background:var(--bg4);border-color:var(--blue)}
+.map-btn.on{border-color:var(--blue);color:var(--blue2)}
 
-.btn-orange{
-    background:#ea580c;
-}
+/* ── LEGEND ── */
+.legend{background:#0d132199;backdrop-filter:blur(12px);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;max-height:220px;overflow-y:auto}
+.legend::-webkit-scrollbar{width:3px}
+.legend::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.leg-row{display:flex;align-items:center;gap:7px;padding:4px 0;cursor:pointer;border-radius:5px;padding:4px 5px;transition:background .12s}
+.leg-row:hover{background:var(--border)}
+.leg-color{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.leg-name{font-size:11px;color:var(--text1);font-weight:500}
+.leg-count{font-size:10px;color:var(--text3);margin-left:auto}
 
-.route-card{
-    background:white;
-    color:#111827;
-    border-radius:14px;
-    padding:15px;
-    margin-top:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
+/* ── SIDEBAR RIGHT ── */
+.sr{background:var(--bg1);border-left:1px solid var(--border);overflow:hidden}
+.sr-inner{width:300px;height:100%;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.sr-inner::-webkit-scrollbar{width:3px}
+.sr-inner::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 
-.client{
-    background:#f8fafc;
-    padding:10px;
-    border-radius:8px;
-    margin-top:8px;
-    border-left:4px solid #2563eb;
-}
+.client-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.avatar{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+.client-name{font-size:13px;font-weight:700;color:var(--text1)}
+.client-code{font-size:10px;color:var(--text3);margin-top:1px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-key{font-size:11px;color:var(--text3)}
+.info-val{font-size:11px;color:var(--text1);font-weight:600}
 
-.badge{
-    display:inline-block;
-    padding:4px 8px;
-    border-radius:20px;
-    font-size:12px;
-    font-weight:bold;
-    background:#dbeafe;
-    color:#1d4ed8;
-}
+/* ── SEARCH ── */
+.search-wrap{position:relative}
+.search-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
+.search-wrap input{padding-left:28px}
+.search-results{margin-top:5px;display:flex;flex-direction:column;gap:3px;max-height:200px;overflow-y:auto}
+.sr-item{padding:7px 9px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);transition:all .12s}
+.sr-item:hover{background:var(--bg4);border-color:var(--border2)}
+.sr-item-name{font-size:12px;font-weight:600;color:var(--text1)}
+.sr-item-meta{font-size:10px;color:var(--text3);margin-top:1px}
 
-.custom-marker{
-    width:30px;
-    height:30px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:white;
-    font-weight:bold;
-    border:2px solid white;
-}
+/* ── TOAST ── */
+.toast{position:fixed;top:62px;right:14px;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:11px 14px;z-index:9999;display:none;align-items:center;gap:10px;font-size:12px;box-shadow:0 12px 32px #00000088;min-width:230px;max-width:300px}
+.toast.show{display:flex}
+.spin{width:15px;height:15px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .55s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast-bar{height:2px;background:var(--blue);position:absolute;bottom:0;left:0;border-radius:0 0 10px 10px;transition:width .3s}
 
-#estado{
-    background:#334155;
-    padding:12px;
-    border-radius:10px;
-}
+/* ── EMPTY ── */
+.empty{text-align:center;padding:20px 14px;color:var(--text3)}
+.empty-ico{font-size:28px;margin-bottom:7px}
+.empty-t{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:3px}
+.empty-s{font-size:10px;line-height:1.5}
+
+/* ── POPUP ── */
+.leaflet-popup-content-wrapper{background:var(--bg2)!important;border:1px solid var(--border2)!important;border-radius:10px!important;color:var(--text1)!important;box-shadow:0 10px 30px #00000099!important;padding:0!important}
+.leaflet-popup-content{margin:0!important;padding:12px 14px!important;min-width:180px}
+.leaflet-popup-tip-container{display:none}
+.p-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.p-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.p-name{font-size:13px;font-weight:700;color:var(--text1)}
+.p-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:4px}
+.p-k{font-size:11px;color:var(--text3)}
+.p-v{font-size:11px;color:var(--text1);font-weight:600;text-align:right}
+.p-btn{margin-top:9px;padding:5px 10px;background:var(--blue3);border:none;border-radius:5px;color:#fff;font-size:11px;cursor:pointer;width:100%;font-weight:600}
+.p-btn:hover{background:var(--blue)}
+
+/* ── ALGO BADGE ── */
+.algo-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 7px;border-radius:10px;font-weight:600;background:#8b5cf622;color:#c4b5fd;border:1px solid #8b5cf644}
+
+/* ── ROUTE DETAIL TABLE ── */
+.rtable{width:100%;font-size:11px;border-collapse:collapse}
+.rtable th{text-align:left;color:var(--text3);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+.rtable td{padding:5px 6px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+.rtable tr:last-child td{border-bottom:none}
+.rtable tr:hover td{background:var(--bg3);color:var(--text1)}
+.rtable tr{cursor:pointer;transition:background .1s}
+.ord-badge{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff}
+.eta-chip{display:inline-flex;align-items:center;gap:3px;background:#1d4ed822;color:var(--blue2);padding:2px 6px;border-radius:6px;font-size:10px;font-weight:600}
+
+/* ── SCROLLABLE TABLE WRAP ── */
+.table-wrap{max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-top:6px}
+.table-wrap::-webkit-scrollbar{width:3px}
+.table-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── RANGE SLIDER ── */
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border2);outline:none;border:none;padding:0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue);cursor:pointer}
+
+/* ── HEAT BADGE ── */
+.heat{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px}
+
+/* ── SWITCH ── */
+.sw-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
+.sw-lbl{font-size:11px;color:var(--text2)}
+.sw{position:relative;width:32px;height:17px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0}
+.sw-track{position:absolute;inset:0;background:var(--border2);border-radius:10px;cursor:pointer;transition:background .2s}
+.sw input:checked+.sw-track{background:var(--blue3)}
+.sw-track:before{content:'';position:absolute;width:13px;height:13px;left:2px;top:2px;background:white;border-radius:50%;transition:transform .2s}
+.sw input:checked+.sw-track:before{transform:translateX(15px)}
 </style>
 </head>
 <body>
 
-<div class="header">
-🚚 Planner
+<div class="toast" id="toast">
+  <div class="spin"></div>
+  <div id="toastMsg" style="flex:1;color:var(--text1)">Procesando...</div>
+  <div class="toast-bar" id="toastBar" style="width:0%"></div>
 </div>
 
-<div class="kpis">
-<div class="kpi" id="kpiClientes">Clientes: 0</div>
-<div class="kpi" id="kpiRutas">Rutas: 0</div>
-<div class="kpi" id="kpiTiempo">Tiempo total: 0 min</div>
-<div class="kpi" id="kpiPromedio">Promedio: 0 min</div>
-<div class="kpi" id="kpiPendientes">Pendientes: 0</div>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">🚚</div>
+    Logistics AI Pro
+    <span class="brand-ver">6.0</span>
+  </div>
+  <div class="sep"></div>
+  <button class="tbtn" onclick="toggleLeft()" title="Panel izquierdo">☰</button>
+  <button class="tbtn" onclick="descargarFormato()">📥 Formato Excel</button>
+  <button class="tbtn" id="btnLimpiar" onclick="limpiarMapa()" disabled>🗑 Limpiar</button>
+  <div class="sep"></div>
+  <button class="tbtn ok" onclick="exportarExcel()" id="btnExport" disabled>📊 Exportar</button>
+  <button class="tbtn accent" onclick="procesar()" id="btnOpt" disabled>⚡ Optimizar rutas</button>
+  <div class="sep ml"></div>
+  <div class="pill"><div class="dot-live"></div><span id="statusTxt">Esperando datos</span></div>
 </div>
 
-<div class="layout">
+<!-- WORKSPACE -->
+<div class="ws" id="ws">
 
-<div class="sidebar">
+  <!-- LEFT SIDEBAR -->
+  <div class="sl" id="sl">
+    <div class="sl-inner">
 
-<div class="section">
-<h3>📂 Configuración</h3>
+      <!-- UPLOAD -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Cargar clientes
+        </div>
+        <div class="drop" id="drop">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+          <div class="drop-ico" id="dropIco">📂</div>
+          <div class="drop-t" id="dropT">Arrastra tu Excel aquí</div>
+          <div class="drop-s" id="dropS">Columnas: Codigo, Cliente, Latitud, Longitud, Direccion</div>
+        </div>
+      </div>
 
-<label>Importar Excel</label>
-<input type="file" id="fileInput">
+      <!-- CONFIGURACIÓN -->
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+          Configuración de rutas
+        </div>
+        <div class="row2" style="margin-bottom:7px">
+          <div class="fg"><span class="lbl">N° rutas</span><input type="number" id="numRutas" value="5" min="1" max="30"></div>
+          <div class="fg"><span class="lbl">Hora inicio</span><input type="time" id="horaInicio" value="08:00"></div>
+        </div>
+        <div class="row3" style="margin-bottom:7px">
+          <div class="fg"><span class="lbl">Visita (min)</span><input type="number" id="tVisita" value="10" min="1"></div>
+          <div class="fg"><span class="lbl">Vel. km/h</span><input type="number" id="velocidad" value="25" min="5"></div>
+          <div class="fg"><span class="lbl">Pausa (min)</span><input type="number" id="tPausa" value="0" min="0"></div>
+        </div>
+        <div class="fg" style="margin-bottom:7px">
+          <span class="lbl">Algoritmo</span>
+          <select id="algo">
+            <option value="nn">Vecino más cercano (NN)</option>
+            <option value="savings">Clarke-Wright Savings</option>
+            <option value="sweep">Sweep (sectores angulares)</option>
+            <option value="kmeans">K-Means + NN</option>
+          </select>
+        </div>
+        <div class="sw-row"><span class="sw-lbl">Evitar cruces entre rutas</span><label class="sw"><input type="checkbox" id="swCruces" checked><div class="sw-track"></div></label></div>
+        <div class="sw-row"><span class="sw-lbl">Mostrar polylines animadas</span><label class="sw"><input type="checkbox" id="swAnim" checked><div class="sw-track"></div></label></div>
+        <div class="sw-row"><span class="sw-lbl">Mostrar clusters en mapa</span><label class="sw"><input type="checkbox" id="swClusters"><div class="sw-track"></div></label></div>
+      </div>
 
-<button class="btn-green" onclick="descargarFormato()">Descargar formato</button>
+      <!-- KPIs -->
+      <div class="card">
+        <div class="card-title">📊 Métricas</div>
+        <div class="kpi-strip">
+          <div class="kpi"><div class="kpi-v" id="kClientes">0</div><div class="kpi-l">Clientes</div></div>
+          <div class="kpi"><div class="kpi-v" id="kRutas">0</div><div class="kpi-l">Rutas</div></div>
+          <div class="kpi"><div class="kpi-v" id="kKm">0</div><div class="kpi-l">Km total</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+          <div class="kpi"><div class="kpi-v" id="kEta" style="font-size:14px">--</div><div class="kpi-l">ETA máx</div></div>
+          <div class="kpi"><div class="kpi-v" id="kBalanceo" style="font-size:14px">--</div><div class="kpi-l">Balanceo</div></div>
+        </div>
+        <div class="prog-wrap" id="progWrap" style="display:none"><div class="prog-fill" id="progFill"></div></div>
+      </div>
 
-<label>Cantidad de rutas</label>
-<input type="number" id="numRutas" value="10">
+      <!-- BÚSQUEDA -->
+      <div class="card">
+        <div class="card-title">🔍 Buscar cliente</div>
+        <div class="search-wrap">
+          <span class="search-ico">🔍</span>
+          <input type="text" id="buscar" placeholder="Código, nombre o dirección..." oninput="buscar()">
+        </div>
+        <div class="search-results" id="searchRes"></div>
+      </div>
 
-<label>Hora inicio</label>
-<input type="time" id="horaInicio" value="08:00">
+      <!-- RUTAS -->
+      <div class="card">
+        <div class="card-title">🗺️ Rutas</div>
+        <div id="routeEmpty" class="empty"><div class="empty-ico">🗺️</div><div class="empty-t">Sin rutas</div><div class="empty-s">Carga datos y optimiza</div></div>
+        <div class="rlist" id="rlist" style="display:none"></div>
+      </div>
 
-<label>Tiempo visita (min)</label>
-<input type="number" id="tiempoVisita" value="10">
-</div>
+    </div>
+  </div>
 
-<div class="section">
-<h3>⚙ Operación</h3>
-<button onclick="procesar()">Optimizar rutas</button>
-<button onclick="centrarMapa()">Centrar rutas</button>
-<button class="btn-orange" onclick="limpiarMapa()">Limpiar mapa</button>
-<button onclick="exportarExcel()">Exportar resultado</button>
-</div>
+  <!-- MAP -->
+  <div class="map-wrap">
+    <div id="map"></div>
 
-<div class="section">
-<h3>📊 Estado</h3>
-<div id="estado">Esperando archivo...</div>
-</div>
+    <!-- Bottom stats -->
+    <div class="map-bottom" id="mapStats" style="display:none">
+      <div class="stat-bar">
+        <div class="sbi"><div class="sbi-v" id="ms1">0</div><div class="sbi-l">Clientes</div></div>
+        <div class="sbi"><div class="sbi-v" id="ms2">0</div><div class="sbi-l">Rutas</div></div>
+        <div class="sbi"><div class="sbi-v" id="ms3">0km</div><div class="sbi-l">Distancia</div></div>
+        <div class="sbi"><div class="sbi-v" id="ms4">--</div><div class="sbi-l">ETA máx</div></div>
+        <div class="sbi"><div class="sbi-v" id="ms5">--</div><div class="sbi-l">Algoritmo</div></div>
+      </div>
+    </div>
 
-<div class="section">
-<h3>🛣 Detalle rutas</h3>
-<div id="panelRutas"></div>
-</div>
+    <!-- Top right controls -->
+    <div class="map-top-right">
+      <div class="map-btn" onclick="fitAll()" title="Centrar mapa">🎯 Centrar</div>
+      <div class="map-btn" id="btnSat" onclick="toggleTile()">🛰 Satélite</div>
+      <div class="map-btn" onclick="toggleRight()">📋 Detalle ruta</div>
+    </div>
 
-</div>
+    <!-- Legend -->
+    <div style="position:absolute;bottom:14px;right:14px;z-index:900;display:none" id="legendWrap">
+      <div class="legend" id="legend"></div>
+    </div>
+  </div>
 
-<div id="map"></div>
+  <!-- RIGHT SIDEBAR -->
+  <div class="sr" id="sr">
+    <div class="sr-inner">
+      <div class="card">
+        <div class="card-title">👤 Detalle cliente</div>
+        <div id="srEmpty" class="empty"><div class="empty-ico">👆</div><div class="empty-t">Selecciona un marcador</div><div class="empty-s">Haz clic en cualquier cliente en el mapa</div></div>
+        <div id="srClient" style="display:none">
+          <div class="client-header">
+            <div class="avatar" id="srAvatar">?</div>
+            <div><div class="client-name" id="srName">—</div><div class="client-code" id="srCode">—</div></div>
+          </div>
+          <div id="srInfo"></div>
+          <div style="margin-top:10px">
+            <div class="lbl" style="margin-bottom:4px">Reasignar a ruta</div>
+            <div style="display:flex;gap:6px">
+              <input type="number" id="srNewRuta" placeholder="N° ruta" min="1" style="flex:1">
+              <button class="tbtn accent" onclick="reasignar()" style="font-size:11px">Mover</button>
+              <button class="tbtn" onclick="cerrarDetalle()" style="font-size:11px">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="srRutaCard" style="display:none">
+        <div class="card-title">📍 Paradas — Ruta <span id="srRutaN">?</span></div>
+        <div class="table-wrap">
+          <table class="rtable">
+            <thead><tr><th>#</th><th>Cliente</th><th>ETA</th><th>Km</th></tr></thead>
+            <tbody id="srRutaBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
 
 </div>
 
 <script>
+/* ─── STATE ─── */
+let datos=[], resultados=[], grupos=[], capasMapa=[], markersMap={}, clSelected=null;
+let tileMode=0, rightOpen=false, leftOpen=true, totalKm=0, maxETA='';
+let rutaFocused=null;
 
-let datos=[];
-let resultados=[];
-let capasMapa=[];
-
-const colores=["#2563eb","#dc2626","#16a34a","#f59e0b","#7c3aed","#0891b2","#ea580c","#be123c"];
-
-const map=L.map('map').setView([-12.0464,-77.0428],11);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-document.getElementById("fileInput").addEventListener("change",function(e){
-
-const file=e.target.files[0];
-const reader=new FileReader();
-
-reader.onload=function(evt){
-const workbook=XLSX.read(evt.target.result,{type:'binary'});
-const sheet=workbook.Sheets[workbook.SheetNames[0]];
-datos=XLSX.utils.sheet_to_json(sheet);
-
-document.getElementById("estado").innerHTML="Archivo cargado: "+datos.length+" clientes";
-document.getElementById("kpiClientes").innerHTML="Clientes: "+datos.length;
-document.getElementById("kpiPendientes").innerHTML="Pendientes: "+datos.length;
-};
-
-reader.readAsBinaryString(file);
-
-});
-
-function descargarFormato(){
-
-const plantilla=[
-{Codigo:"CLI001",Cliente:"Bodega Norte",Latitud:-11.9823,Longitud:-77.0721,Direccion:"Los Olivos"},
-{Codigo:"CLI002",Cliente:"Market Centro",Latitud:-12.0464,Longitud:-77.0428,Direccion:"Lima Centro"}
+const COLORS=["#3b82f6","#ef4444","#10b981","#f59e0b","#8b5cf6","#06b6d4","#f97316","#ec4899","#14b8a6","#6366f1","#84cc16","#e11d48","#0ea5e9","#a3e635"];
+const TILES=[
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 ];
+let tileLayer;
 
-const ws=XLSX.utils.json_to_sheet(plantilla);
-const wb=XLSX.utils.book_new();
+/* ─── MAP INIT ─── */
+const map=L.map('map',{zoomControl:false,attributionControl:false}).setView([-12.0464,-77.0428],12);
+L.control.zoom({position:'topleft'}).addTo(map);
+tileLayer=L.tileLayer(TILES[0],{maxZoom:19}).addTo(map);
 
-XLSX.utils.book_append_sheet(wb,ws,"Formato");
+/* ─── FILE LOAD ─── */
+const drop=document.getElementById('drop');
+document.getElementById('fileInput').addEventListener('change',loadFile);
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over')});
+drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('fileInput').files=dt.files;loadFile({target:{files:dt.files}})}});
 
-XLSX.writeFile(wb,"Formato_Clientes.xlsx");
-
+function loadFile(e){
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=evt=>{
+    try{
+      const wb=XLSX.read(evt.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws);
+      datos=raw.filter(c=>{
+        const la=parseFloat(c.Latitud||c.latitud||c.lat||c.LAT);
+        const lo=parseFloat(c.Longitud||c.longitud||c.lng||c.LNG||c.lon||c.LON);
+        return !isNaN(la)&&!isNaN(lo);
+      }).map(c=>({
+        Codigo:String(c.Codigo||c.codigo||c.CODIGO||c.id||Math.random()),
+        Cliente:String(c.Cliente||c.cliente||c.CLIENTE||c.nombre||c.Nombre||'Sin nombre'),
+        Latitud:parseFloat(c.Latitud||c.latitud||c.lat||c.LAT),
+        Longitud:parseFloat(c.Longitud||c.longitud||c.lng||c.LNG||c.lon||c.LON),
+        Direccion:String(c.Direccion||c.direccion||c.dir||c.address||''),
+        Zona:String(c.Zona||c.zona||c.district||''),
+        Prioridad:parseInt(c.Prioridad||c.prioridad||1)||1
+      }));
+      if(!datos.length){alert('No se encontraron filas con coordenadas válidas.\nVerifica las columnas: Latitud, Longitud');return}
+      document.getElementById('dropIco').textContent='✅';
+      document.getElementById('dropT').textContent=datos.length+' clientes cargados';
+      document.getElementById('dropS').textContent=f.name;
+      drop.style.borderColor='var(--green)';
+      document.getElementById('kClientes').textContent=datos.length;
+      setStatus(datos.length+' clientes listos');
+      document.getElementById('btnOpt').disabled=false;
+      pintarBrutos();
+    }catch(err){alert('Error al leer el archivo: '+err.message)}
+  };
+  r.readAsBinaryString(f);
 }
 
-function sumarMinutos(hora,minutos){
-let [h,m]=hora.split(":").map(Number);
-let total=(h*60)+m+minutos;
-return `${String(Math.floor(total/60)).padStart(2,"0")}:${String(total%60).padStart(2,"0")}`;
+function pintarBrutos(){
+  capasMapa.forEach(l=>map.removeLayer(l)); capasMapa=[]; markersMap={};
+  const bounds=[];
+  datos.forEach(c=>{
+    const m=L.circleMarker([c.Latitud,c.Longitud],{
+      radius:7,fillColor:'#3b82f6',color:'#1d4ed8',weight:1.5,fillOpacity:.75,className:'client-dot'
+    }).addTo(map);
+    m.bindTooltip(c.Cliente,{direction:'top',className:'',offset:[0,-4]});
+    capasMapa.push(m);
+    bounds.push([c.Latitud,c.Longitud]);
+  });
+  if(bounds.length) map.fitBounds(bounds,{padding:[50,50],maxZoom:14});
 }
 
-async function matrizTiempos(lista){
-let coords=lista.map(c=>`${c.Longitud},${c.Latitud}`).join(";");
-const res=await fetch(`https://router.project-osrm.org/table/v1/driving/${coords}`);
-const data=await res.json();
-return data.durations;
+/* ─── ALGORITHMS ─── */
+function haversine(a,b){
+  const R=6371,dLa=(b.Latitud-a.Latitud)*Math.PI/180,dLo=(b.Longitud-a.Longitud)*Math.PI/180;
+  const x=Math.sin(dLa/2)**2+Math.cos(a.Latitud*Math.PI/180)*Math.cos(b.Latitud*Math.PI/180)*Math.sin(dLo/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
+function centroid(arr){return{Latitud:arr.reduce((s,c)=>s+c.Latitud,0)/arr.length,Longitud:arr.reduce((s,c)=>s+c.Longitud,0)/arr.length}}
+function angle(depot,c){return Math.atan2(c.Longitud-depot.Longitud,c.Latitud-depot.Latitud)*180/Math.PI}
+
+// Nearest Neighbor
+function algoNN(clientes,n){
+  let pend=[...clientes].sort((a,b)=>b.Latitud-a.Latitud);
+  const rutas=Array.from({length:n},()=>[]);
+  const per=Math.ceil(pend.length/n);
+  for(let r=0;r<n&&pend.length;r++){
+    let cur=pend.shift(); rutas[r].push(cur);
+    while(rutas[r].length<per&&pend.length){
+      let bi=0,bd=Infinity;
+      for(let i=0;i<pend.length;i++){const d=haversine(cur,pend[i]);if(d<bd){bd=d;bi=i}}
+      cur=pend.splice(bi,1)[0]; rutas[r].push(cur);
+    }
+  }
+  pend.forEach(c=>{rutas.reduce((a,b)=>a.length<=b.length?a:b).push(c)});
+  return rutas;
 }
 
-function optimizarConMatriz(lista,matriz){
-let pendientes=[...Array(lista.length).keys()];
-let ruta=[];
-let actual=pendientes.shift();
-
-ruta.push(actual);
-
-while(pendientes.length){
-let mejor=pendientes[0];
-let menor=Infinity;
-
-pendientes.forEach(i=>{
-if(matriz[actual][i]<menor){
-menor=matriz[actual][i];
-mejor=i;
-}
-});
-
-pendientes=pendientes.filter(x=>x!==mejor);
-ruta.push(mejor);
-actual=mejor;
+// Sweep (angular sectors)
+function algoSweep(clientes,n){
+  const dep=centroid(clientes);
+  const sorted=[...clientes].sort((a,b)=>angle(dep,a)-angle(dep,b));
+  const rutas=Array.from({length:n},()=>[]);
+  sorted.forEach((c,i)=>rutas[i%n].push(c));
+  // dentro de cada ruta, ordenar por NN
+  return rutas.map(r=>{
+    if(r.length<2) return r;
+    const out=[r[0]]; const rem=[...r.slice(1)];
+    while(rem.length){
+      const cur=out[out.length-1]; let bi=0,bd=Infinity;
+      for(let i=0;i<rem.length;i++){const d=haversine(cur,rem[i]);if(d<bd){bd=d;bi=i}}
+      out.push(rem.splice(bi,1)[0]);
+    }
+    return out;
+  });
 }
 
-return ruta.map(i=>lista[i]);
+// K-Means + NN
+function algoKMeans(clientes,n){
+  // init centroids con primeros n puntos distribuidos
+  let centroids=[];
+  const step=Math.max(1,Math.floor(clientes.length/n));
+  for(let i=0;i<n;i++) centroids.push({Latitud:clientes[Math.min(i*step,clientes.length-1)].Latitud,Longitud:clientes[Math.min(i*step,clientes.length-1)].Longitud});
+  let clusters=Array.from({length:n},()=>[]);
+  for(let iter=0;iter<8;iter++){
+    clusters=Array.from({length:n},()=>[]);
+    clientes.forEach(c=>{
+      let bi=0,bd=Infinity;
+      centroids.forEach((ct,i)=>{const d=haversine(c,ct);if(d<bd){bd=d;bi=i}});
+      clusters[bi].push(c);
+    });
+    centroids=clusters.map(cl=>cl.length?centroid(cl):centroids[clusters.indexOf(cl)]);
+  }
+  // distribución balanceada
+  const per=Math.ceil(clientes.length/n);
+  clusters.forEach((cl,r)=>{
+    while(cl.length>per+2){
+      const c=cl.pop();
+      clusters.reduce((a,b)=>a.length<b.length?a:b).push(c);
+    }
+  });
+  return clusters.map(r=>{
+    if(r.length<2) return r;
+    const out=[r[0]]; const rem=[...r.slice(1)];
+    while(rem.length){
+      const cur=out[out.length-1]; let bi=0,bd=Infinity;
+      for(let i=0;i<rem.length;i++){const d=haversine(cur,rem[i]);if(d<bd){bd=d;bi=i}}
+      out.push(rem.splice(bi,1)[0]);
+    }
+    return out;
+  });
 }
 
-async function geometriaRuta(lista){
-let coords=lista.map(c=>`${c.Longitud},${c.Latitud}`).join(";");
-const res=await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`);
-const data=await res.json();
-return data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+// Clarke-Wright Savings (simplified)
+function algoSavings(clientes,n){
+  const dep=centroid(clientes);
+  const savings=[];
+  for(let i=0;i<clientes.length;i++)
+    for(let j=i+1;j<clientes.length;j++){
+      const s=haversine(dep,clientes[i])+haversine(dep,clientes[j])-haversine(clientes[i],clientes[j]);
+      savings.push({i,j,s});
+    }
+  savings.sort((a,b)=>b.s-a.s);
+  const routes=clientes.map(c=>[c]);
+  const routeOf={};
+  clientes.forEach((c,i)=>routeOf[c.Codigo]=i);
+  for(const sv of savings){
+    if(routes.filter(r=>r.length).length<=n) break;
+    const ri=routeOf[clientes[sv.i].Codigo], rj=routeOf[clientes[sv.j].Codigo];
+    if(ri===rj) continue;
+    const merged=[...routes[ri],...routes[rj]];
+    routes[ri]=merged; routes[rj]=[];
+    merged.forEach(c=>routeOf[c.Codigo]=ri);
+  }
+  let active=routes.filter(r=>r.length);
+  while(active.length>n){
+    active.sort((a,b)=>a.length-b.length);
+    const sm=active.shift();
+    sm.forEach(c=>active.reduce((a,b)=>a.length<b.length?a:b).push(c));
+    active=active.filter(r=>r.length);
+  }
+  while(active.length<n) active.push([]);
+  return active;
 }
 
+function runAlgo(clientes,n){
+  const a=document.getElementById('algo').value;
+  if(a==='sweep') return algoSweep(clientes,n);
+  if(a==='kmeans') return algoKMeans(clientes,n);
+  if(a==='savings') return algoSavings(clientes,n);
+  return algoNN(clientes,n);
+}
+
+/* ─── PROCESS ─── */
 async function procesar(){
+  if(!datos.length) return;
+  resultados=[]; grupos=[]; totalKm=0; maxETA='';
+  capasMapa.forEach(l=>map.removeLayer(l)); capasMapa=[]; markersMap={};
+  document.getElementById('rlist').innerHTML='';
+  document.getElementById('rlist').style.display='none';
+  document.getElementById('routeEmpty').style.display='block';
+  document.getElementById('srRutaCard').style.display='none';
+  cerrarDetalle();
 
-if(datos.length===0){
-alert("Carga archivo");
-return;
+  const n=Math.max(1,parseInt(document.getElementById('numRutas').value)||5);
+  const tv=parseInt(document.getElementById('tVisita').value)||10;
+  const vel=parseInt(document.getElementById('velocidad').value)||25;
+  const tp=parseInt(document.getElementById('tPausa').value)||0;
+  const h0=document.getElementById('horaInicio').value||'08:00';
+  const anim=document.getElementById('swAnim').checked;
+  const algoName=document.getElementById('algo').options[document.getElementById('algo').selectedIndex].text;
+
+  document.getElementById('kRutas').textContent=n;
+  setStatus('Optimizando con '+algoName+'...');
+  showToast('Calculando rutas...',5);
+  const pw=document.getElementById('progWrap'); pw.style.display='block';
+  const pf=document.getElementById('progFill'); pf.style.width='0%';
+
+  await sleep(60);
+  grupos=runAlgo(datos,n);
+  const bounds=[];
+  const routeSizes=grupos.map(g=>g.length);
+  const maxS=Math.max(...routeSizes), minS=Math.min(...routeSizes.filter(s=>s>0));
+  const balanceo=maxS>0?Math.round((minS/maxS)*100)+'%':'--';
+
+  for(let r=0;r<grupos.length;r++){
+    const pct=Math.round((r+1)/grupos.length*100);
+    pf.style.width=pct+'%';
+    showToast('Trazando ruta '+(r+1)+'/'+grupos.length,pct);
+    await sleep(20);
+
+    const col=COLORS[r%COLORS.length];
+    const coords=[]; let minAcum=0; let rutaKm=0;
+
+    for(let i=0;i<grupos[r].length;i++){
+      const c=grupos[r][i];
+      let kmSeg=0, minSeg=0;
+      if(i>0){
+        kmSeg=haversine(grupos[r][i-1],c);
+        minSeg=Math.round(kmSeg/vel*60);
+        totalKm+=kmSeg; rutaKm+=kmSeg;
+      }
+      minAcum+=(i>0?minSeg:0)+tv+(i>0&&tp>0&&i%5===0?tp:0);
+      const eta=addMin(h0,minAcum);
+      if(eta>maxETA) maxETA=eta;
+      coords.push([c.Latitud,c.Longitud]);
+      bounds.push([c.Latitud,c.Longitud]);
+
+      // MARKER
+      const html=`<div style="width:26px;height:26px;border-radius:50%;background:${col};border:2.5px solid #080c14;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:9px;cursor:pointer;box-shadow:0 0 0 2px ${col}44,0 2px 8px #0006;transition:transform .1s" onmouseover="this.style.transform='scale(1.25)'" onmouseout="this.style.transform='scale(1)'">${i+1}</div>`;
+      const icon=L.divIcon({className:'',html,iconSize:[26,26],iconAnchor:[13,13]});
+      const mk=L.marker([c.Latitud,c.Longitud],{icon}).addTo(map);
+
+      // POPUP
+      const popHtml=`<div class="p-head"><div class="p-dot" style="background:${col}"></div><div class="p-name">${c.Cliente}</div></div>`+
+        `<div class="p-row"><span class="p-k">Código</span><span class="p-v">${c.Codigo}</span></div>`+
+        `<div class="p-row"><span class="p-k">Ruta</span><span class="p-v" style="color:${col}">Ruta ${r+1} · #${i+1}</span></div>`+
+        `<div class="p-row"><span class="p-k">ETA</span><span class="p-v"><span class="eta-chip">🕐 ${eta}</span></span></div>`+
+        `<div class="p-row"><span class="p-k">Distancia</span><span class="p-v">${kmSeg.toFixed(2)} km</span></div>`+
+        (c.Direccion?`<div class="p-row"><span class="p-k">Dir</span><span class="p-v">${c.Direccion}</span></div>`:'')+
+        (c.Zona?`<div class="p-row"><span class="p-k">Zona</span><span class="p-v">${c.Zona}</span></div>`:'')+
+        `<button class="p-btn" onclick="verDetalle('${c.Codigo}')">Ver detalle completo →</button>`;
+      mk.bindPopup(popHtml,{maxWidth:240});
+      mk.on('click',()=>selClient(c,r+1,col,i+1,eta,kmSeg));
+      capasMapa.push(mk);
+      markersMap[c.Codigo]=mk;
+
+      resultados.push({Ruta:r+1,Orden:i+1,Codigo:c.Codigo,Cliente:c.Cliente,Latitud:c.Latitud,Longitud:c.Longitud,Direccion:c.Direccion,Zona:c.Zona||'',Km_anterior:+kmSeg.toFixed(3),Visita_min:tv,ETA:eta,Color:col});
+    }
+
+    if(coords.length>1){
+      // Sombra ruta
+      const shadow=L.polyline(coords,{color:'#000',weight:7,opacity:.25}).addTo(map);
+      // Línea ruta
+      const poly=L.polyline(coords,{color:col,weight:3.5,opacity:.9,dashArray:anim?'10,6':null,className:'route-line'}).addTo(map);
+      capasMapa.push(shadow,poly);
+
+      // Flechas de dirección
+      if(coords.length>1){
+        for(let i=0;i<coords.length-1;i++){
+          const mid=[(coords[i][0]+coords[i+1][0])/2,(coords[i][1]+coords[i+1][1])/2];
+          const ang=Math.atan2(coords[i+1][1]-coords[i][1],coords[i+1][0]-coords[i][0])*180/Math.PI;
+          if(i%Math.max(1,Math.floor((coords.length-1)/5))===0){
+            const arrowIcon=L.divIcon({className:'',html:`<div style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:${col};font-size:12px;transform:rotate(${ang}deg)">➤</div>`,iconSize:[16,16],iconAnchor:[8,8]});
+            const am=L.marker(mid,{icon:arrowIcon,interactive:false}).addTo(map);
+            capasMapa.push(am);
+          }
+        }
+      }
+    }
+  }
+
+  if(bounds.length) map.fitBounds(bounds,{padding:[50,50],maxZoom:14});
+  pw.style.display='none'; hideToast();
+
+  document.getElementById('kKm').textContent=Math.round(totalKm)+'km';
+  document.getElementById('kEta').textContent=maxETA||'--';
+  document.getElementById('kBalanceo').textContent=balanceo;
+  document.getElementById('ms1').textContent=resultados.length;
+  document.getElementById('ms2').textContent=n;
+  document.getElementById('ms3').textContent=Math.round(totalKm)+'km';
+  document.getElementById('ms4').textContent=maxETA;
+  document.getElementById('ms5').textContent=document.getElementById('algo').value.toUpperCase();
+  document.getElementById('mapStats').style.display='flex';
+  document.getElementById('legendWrap').style.display='block';
+
+  renderRutas(); renderLegend();
+  document.getElementById('btnLimpiar').disabled=false;
+  document.getElementById('btnExport').disabled=false;
+  setStatus(n+' rutas optimizadas ✓  ['+algoName+']');
 }
 
-resultados=[];
-document.getElementById("panelRutas").innerHTML="";
-limpiarMapa();
-
-let numRutas=parseInt(document.getElementById("numRutas").value);
-let tiempoVisita=parseInt(document.getElementById("tiempoVisita").value);
-let horaInicio=document.getElementById("horaInicio").value;
-
-datos.sort((a,b)=>b.Latitud-a.Latitud);
-
-let porRuta=Math.floor(datos.length/numRutas);
-let sobrantes=datos.length%numRutas;
-let inicio=0;
-let tiempoTotal=0;
-
-for(let r=0;r<numRutas;r++){
-
-let cantidad=porRuta;
-if(r===numRutas-1) cantidad+=sobrantes;
-
-let grupo=datos.slice(inicio,inicio+cantidad);
-inicio+=cantidad;
-
-if(grupo.length===0) continue;
-
-let matriz=await matrizTiempos(grupo);
-let ordenados=optimizarConMatriz(grupo,matriz);
-let geometry=await geometriaRuta(ordenados);
-
-let acumulado=0;
-let html="";
-
-for(let i=0;i<ordenados.length;i++){
-
-let traslado=0;
-
-if(i>0){
-let idxAnterior=grupo.findIndex(x=>x.Cliente===ordenados[i-1].Cliente);
-let idxActual=grupo.findIndex(x=>x.Cliente===ordenados[i].Cliente);
-
-traslado=Math.round(matriz[idxAnterior][idxActual]/60);
-acumulado+=traslado;
+/* ─── RENDER ROUTES LIST ─── */
+function renderRutas(){
+  const rl=document.getElementById('rlist');
+  const re=document.getElementById('routeEmpty');
+  re.style.display='none'; rl.style.display='flex'; rl.innerHTML='';
+  grupos.forEach((g,r)=>{
+    if(!g.length) return;
+    const col=COLORS[r%COLORS.length];
+    const km=resultados.filter(x=>x.Ruta===r+1).reduce((s,x)=>s+x.Km_anterior,0);
+    const d=document.createElement('div');
+    d.className='ritem'; d.dataset.r=r+1;
+    d.innerHTML=`<div class="ritem-dot" style="background:${col}"></div><div class="ritem-info"><div class="ritem-name">Ruta ${r+1}</div><div class="ritem-meta">${g.length} paradas · ${km.toFixed(1)}km</div></div><div class="rbadge" style="background:${col}22;color:${col}">${r+1}</div>`;
+    d.onclick=()=>focusRuta(r+1,col,d);
+    rl.appendChild(d);
+  });
 }
 
-acumulado+=tiempoVisita;
-
-let eta=sumarMinutos(horaInicio,acumulado);
-let cliente=ordenados[i];
-
-let marker=L.marker([cliente.Latitud,cliente.Longitud],{
-icon:L.divIcon({
-className:"",
-html:`<div class="custom-marker" style="background:${colores[r]}">${i+1}</div>`
-})
-}).addTo(map);
-
-marker.bindPopup(`
-<b>${cliente.Cliente}</b><br>
-Código: ${cliente.Codigo}<br>
-Dirección: ${cliente.Direccion}<br>
-Lat: ${cliente.Latitud}<br>
-Lng: ${cliente.Longitud}<br>
-ETA: ${eta}
-`);
-
-capasMapa.push(marker);
-
-html+=`
-<div class="client">
-<span class="badge">Ruta ${r+1}</span><br>
-<b>${i+1}. ${cliente.Cliente}</b><br>
-Código: ${cliente.Codigo}<br>
-Traslado: ${traslado} min<br>
-ETA: ${eta}
-</div>
-`;
-
-resultados.push({
-Ruta:r+1,
-Orden:i+1,
-Codigo:cliente.Codigo,
-Cliente:cliente.Cliente,
-Latitud:cliente.Latitud,
-Longitud:cliente.Longitud,
-Direccion:cliente.Direccion,
-Tiempo_Traslado:traslado,
-Tiempo_Visita:tiempoVisita,
-ETA:eta
-});
+function renderLegend(){
+  const leg=document.getElementById('legend');
+  leg.innerHTML='<div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px">Leyenda</div>';
+  grupos.forEach((g,r)=>{
+    if(!g.length) return;
+    const col=COLORS[r%COLORS.length];
+    const km=resultados.filter(x=>x.Ruta===r+1).reduce((s,x)=>s+x.Km_anterior,0);
+    const row=document.createElement('div');
+    row.className='leg-row';
+    row.innerHTML=`<div class="leg-color" style="background:${col}"></div><div class="leg-name">Ruta ${r+1}</div><div class="leg-count">${g.length}p · ${km.toFixed(1)}km</div>`;
+    row.onclick=()=>focusRuta(r+1,col,null);
+    leg.appendChild(row);
+  });
 }
 
-tiempoTotal+=acumulado;
-
-let poly=L.polyline(geometry,{
-color:colores[r],
-weight:6,
-opacity:0.85
-}).addTo(map);
-
-capasMapa.push(poly);
-
-document.getElementById("panelRutas").innerHTML+=`
-<div class="route-card">
-<h3 style="color:${colores[r]}">Ruta ${r+1}</h3>
-${html}
-<b>Total: ${acumulado} min</b>
-</div>
-`;
+function focusRuta(ruta,col,el){
+  const items=document.querySelectorAll('.ritem');
+  items.forEach(x=>x.classList.remove('active'));
+  if(rutaFocused===ruta){
+    rutaFocused=null;
+    capasMapa.forEach(l=>{try{l.setOpacity(1)}catch(e){}});
+    document.getElementById('srRutaCard').style.display='none';
+  } else {
+    rutaFocused=ruta; if(el) el.classList.add('active');
+    capasMapa.forEach(l=>{try{l.setOpacity(.1)}catch(e){}});
+    const pts=resultados.filter(x=>x.Ruta===ruta);
+    pts.forEach(p=>{const m=markersMap[p.Codigo];if(m){try{m.setOpacity(1)}catch(e){}}});
+    // fit to ruta
+    const bb=pts.map(p=>[p.Latitud,p.Longitud]);
+    if(bb.length) map.fitBounds(bb,{padding:[60,60],maxZoom:15});
+    // right panel table
+    renderRutaTable(ruta,col);
+  }
 }
 
-document.getElementById("kpiRutas").innerHTML="Rutas: "+numRutas;
-document.getElementById("kpiTiempo").innerHTML="Tiempo total: "+tiempoTotal+" min";
-document.getElementById("kpiPromedio").innerHTML="Promedio: "+Math.round(tiempoTotal/numRutas)+" min";
-document.getElementById("kpiPendientes").innerHTML="Pendientes: 0";
-
-centrarMapa();
-
-document.getElementById("estado").innerHTML="Optimización completada";
+function renderRutaTable(ruta,col){
+  document.getElementById('srRutaN').textContent=ruta;
+  document.getElementById('srRutaN').style.color=col;
+  const pts=resultados.filter(x=>x.Ruta===ruta).sort((a,b)=>a.Orden-b.Orden);
+  const tbody=document.getElementById('srRutaBody');
+  tbody.innerHTML='';
+  pts.forEach(p=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="ord-badge" style="background:${col}">${p.Orden}</span></td><td style="max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.Cliente}">${p.Cliente}</td><td><span class="eta-chip">${p.ETA}</span></td><td>${p.Km_anterior.toFixed(1)}</td>`;
+    tr.onclick=()=>{const m=markersMap[p.Codigo];if(m){map.setView([p.Latitud,p.Longitud],16,{animate:true});setTimeout(()=>m.openPopup(),300)}};
+    tbody.appendChild(tr);
+  });
+  document.getElementById('srRutaCard').style.display='block';
+  if(!rightOpen) toggleRight();
 }
 
+/* ─── CLIENT DETAIL ─── */
+function selClient(c,ruta,col,orden,eta,km){
+  clSelected={...c,ruta,orden,eta,km};
+  document.getElementById('srEmpty').style.display='none';
+  document.getElementById('srClient').style.display='block';
+  const av=document.getElementById('srAvatar');
+  av.style.background=col+'33'; av.style.color=col;
+  av.textContent=(c.Cliente||c.Codigo).substring(0,2).toUpperCase();
+  document.getElementById('srName').textContent=c.Cliente;
+  document.getElementById('srCode').textContent=c.Codigo;
+  document.getElementById('srInfo').innerHTML=
+    `<div class="info-row"><span class="info-key">Ruta</span><span class="info-val" style="color:${col}">Ruta ${ruta} · Parada ${orden}</span></div>`+
+    `<div class="info-row"><span class="info-key">ETA</span><span class="info-val">${eta}</span></div>`+
+    `<div class="info-row"><span class="info-key">Km desde anterior</span><span class="info-val">${km.toFixed(2)} km</span></div>`+
+    (c.Direccion?`<div class="info-row"><span class="info-key">Dirección</span><span class="info-val">${c.Direccion}</span></div>`:'')+
+    (c.Zona?`<div class="info-row"><span class="info-key">Zona</span><span class="info-val">${c.Zona}</span></div>`:'')+
+    `<div class="info-row"><span class="info-key">Lat / Lng</span><span class="info-val">${c.Latitud.toFixed(5)}, ${c.Longitud.toFixed(5)}</span></div>`;
+  document.getElementById('srNewRuta').value='';
+  if(!rightOpen) toggleRight();
+}
+
+function verDetalle(cod){
+  const r=resultados.find(x=>x.Codigo===cod);
+  if(!r) return;
+  const c=datos.find(x=>x.Codigo===cod)||r;
+  const col=r.Color||COLORS[(r.Ruta-1)%COLORS.length];
+  selClient(c,r.Ruta,col,r.Orden,r.ETA,r.Km_anterior);
+}
+
+function cerrarDetalle(){
+  clSelected=null;
+  document.getElementById('srEmpty').style.display='block';
+  document.getElementById('srClient').style.display='none';
+}
+
+function reasignar(){
+  if(!clSelected) return;
+  const nr=parseInt(document.getElementById('srNewRuta').value);
+  if(!nr||nr<1){alert('Ingresa un número de ruta válido');return}
+  const r=resultados.find(x=>x.Codigo===clSelected.Codigo);
+  if(r){r.Ruta=nr; setStatus('Cliente movido a Ruta '+nr); cerrarDetalle(); renderRutas()}
+}
+
+/* ─── SEARCH ─── */
+function buscar(){
+  const q=(document.getElementById('buscar').value||'').toLowerCase().trim();
+  const res=document.getElementById('searchRes');
+  if(!q){res.innerHTML='';return}
+  const found=resultados.filter(x=>(x.Codigo||'').toLowerCase().includes(q)||(x.Cliente||'').toLowerCase().includes(q)||(x.Direccion||'').toLowerCase().includes(q)).slice(0,8);
+  if(!found.length){res.innerHTML='<div style="font-size:11px;color:var(--text3);padding:6px 4px">Sin resultados</div>';return}
+  res.innerHTML=found.map(c=>{
+    const col=c.Color||COLORS[(c.Ruta-1)%COLORS.length];
+    return `<div class="sr-item" onclick="goClient('${c.Codigo}')"><div class="sr-item-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${col};margin-right:5px;vertical-align:middle"></span>${c.Cliente}</div><div class="sr-item-meta">Ruta ${c.Ruta} · ${c.Codigo} · ETA ${c.ETA}</div></div>`;
+  }).join('');
+}
+
+function goClient(cod){
+  const r=resultados.find(x=>x.Codigo===cod);
+  if(!r) return;
+  map.setView([r.Latitud,r.Longitud],16,{animate:true});
+  const m=markersMap[cod];
+  if(m) setTimeout(()=>m.openPopup(),350);
+  document.getElementById('buscar').value='';
+  document.getElementById('searchRes').innerHTML='';
+}
+
+/* ─── UI HELPERS ─── */
+function setStatus(t){document.getElementById('statusTxt').textContent=t}
+function showToast(msg,pct){const t=document.getElementById('toast');t.classList.add('show');document.getElementById('toastMsg').textContent=msg;document.getElementById('toastBar').style.width=(pct||0)+'%'}
+function hideToast(){document.getElementById('toast').classList.remove('show')}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function addMin(h,m){const p=h.split(':').map(Number),t=p[0]*60+p[1]+m;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')}
+
+function toggleLeft(){
+  const ws=document.getElementById('ws');
+  leftOpen=!leftOpen;
+  ws.classList.toggle('no-left',!leftOpen);
+  setTimeout(()=>map.invalidateSize(),260);
+}
+function toggleRight(){
+  const ws=document.getElementById('ws');
+  rightOpen=!rightOpen;
+  ws.classList.toggle('with-right',rightOpen);
+  setTimeout(()=>map.invalidateSize(),260);
+}
+function fitAll(){
+  const bounds=resultados.map(r=>[r.Latitud,r.Longitud]);
+  if(bounds.length) map.fitBounds(bounds,{padding:[50,50],maxZoom:14});
+  else if(datos.length){const b=datos.map(c=>[c.Latitud,c.Longitud]);map.fitBounds(b,{padding:[50,50]})}
+}
+function toggleTile(){
+  tileMode=1-tileMode; map.removeLayer(tileLayer);
+  tileLayer=L.tileLayer(TILES[tileMode],{maxZoom:19}).addTo(map);
+  const btn=document.getElementById('btnSat');
+  btn.textContent=tileMode===1?'🗺 Mapa':'🛰 Satélite';
+  btn.classList.toggle('on',tileMode===1);
+}
 function limpiarMapa(){
-capasMapa.forEach(layer=>map.removeLayer(layer));
-capasMapa=[];
+  if(!confirm('¿Limpiar todas las rutas del mapa?')) return;
+  resultados=[]; grupos=[]; totalKm=0; maxETA='';
+  capasMapa.forEach(l=>map.removeLayer(l)); capasMapa=[]; markersMap={};
+  document.getElementById('rlist').style.display='none';
+  document.getElementById('routeEmpty').style.display='block';
+  document.getElementById('mapStats').style.display='none';
+  document.getElementById('legendWrap').style.display='none';
+  document.getElementById('srRutaCard').style.display='none';
+  cerrarDetalle();
+  ['kRutas','kKm','kEta','kBalanceo'].forEach(id=>{document.getElementById(id).textContent='--'});
+  document.getElementById('btnLimpiar').disabled=true;
+  document.getElementById('btnExport').disabled=true;
+  setStatus('Esperando datos');
+  pintarBrutos();
 }
 
-function centrarMapa(){
-if(capasMapa.length===0) return;
-let group=new L.featureGroup(capasMapa);
-map.fitBounds(group.getBounds(),{padding:[30,30]});
+/* ─── EXPORT ─── */
+function descargarFormato(){
+  const tpl=[
+    {Codigo:'CLI001',Cliente:'Distribuidora Norte',Latitud:-11.9800,Longitud:-77.0700,Direccion:'Av. Los Alisos 210, Los Olivos',Zona:'Norte',Prioridad:1},
+    {Codigo:'CLI002',Cliente:'Tienda Sur Express',Latitud:-12.1050,Longitud:-76.9900,Direccion:'Jr. Los Faisanes 450, San Borja',Zona:'Sur',Prioridad:2},
+    {Codigo:'CLI003',Cliente:'Minimarket Este',Latitud:-12.0500,Longitud:-76.9500,Direccion:'Av. La Molina 340, La Molina',Zona:'Este',Prioridad:1},
+    {Codigo:'CLI004',Cliente:'Bodega Central',Latitud:-12.0600,Longitud:-77.0600,Direccion:'Jr. Ica 150, Cercado',Zona:'Centro',Prioridad:3},
+    {Codigo:'CLI005',Cliente:'Supermercado Oeste',Latitud:-12.0900,Longitud:-77.0950,Direccion:'Av. La Marina 2345, San Miguel',Zona:'Oeste',Prioridad:1}
+  ];
+  const ws=XLSX.utils.json_to_sheet(tpl);
+  ws['!cols']=[{wch:10},{wch:24},{wch:10},{wch:11},{wch:35},{wch:10},{wch:10}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Clientes');
+  XLSX.writeFile(wb,'Formato_Logistics_Pro.xlsx');
 }
 
 function exportarExcel(){
-const ws=XLSX.utils.json_to_sheet(resultados);
-const wb=XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb,ws,"Rutas");
-XLSX.writeFile(wb,"Planner_Resultado.xlsx");
+  if(!resultados.length){alert('Primero genera las rutas');return}
+  const ws=XLSX.utils.json_to_sheet(resultados.map(r=>({
+    Ruta:r.Ruta,Orden:r.Orden,Codigo:r.Codigo,Cliente:r.Cliente,
+    Latitud:r.Latitud,Longitud:r.Longitud,Direccion:r.Direccion,
+    Zona:r.Zona,Km_desde_anterior:r.Km_anterior,
+    Tiempo_visita_min:r.Visita_min,ETA_estimada:r.ETA
+  })));
+  ws['!cols']=[{wch:6},{wch:7},{wch:10},{wch:22},{wch:10},{wch:11},{wch:30},{wch:12},{wch:18},{wch:18},{wch:12}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Rutas');
+  // Summary sheet
+  const summary=grupos.filter(g=>g.length).map((g,r)=>({
+    Ruta:r+1,Clientes:g.length,
+    Km_total:+(resultados.filter(x=>x.Ruta===r+1).reduce((s,x)=>s+x.Km_anterior,0).toFixed(2)),
+    ETA_ultima:resultados.filter(x=>x.Ruta===r+1).sort((a,b)=>b.Orden-a.Orden)[0]?.ETA||''
+  }));
+  const ws2=XLSX.utils.json_to_sheet(summary);
+  XLSX.utils.book_append_sheet(wb,ws2,'Resumen');
+  XLSX.writeFile(wb,'Logistics_Pro_6_Rutas.xlsx');
+  setStatus('Excel exportado con '+resultados.length+' paradas ✓');
 }
-
 </script>
-
 </body>
 </html>
