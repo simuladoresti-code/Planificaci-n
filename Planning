@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planner</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#eef2f7;
+}
+
+.header{
+    height:65px;
+    background:linear-gradient(90deg,#0f172a,#1e293b);
+    color:white;
+    padding:0 25px;
+    display:flex;
+    align-items:center;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.kpis{
+    display:flex;
+    gap:12px;
+    padding:12px;
+    background:white;
+    border-bottom:1px solid #ddd;
+}
+
+.kpi{
+    flex:1;
+    background:#ffffff;
+    border-radius:14px;
+    padding:15px;
+    box-shadow:0 4px 12px rgba(0,0,0,.05);
+    text-align:center;
+    font-weight:bold;
+}
+
+.layout{
+    display:grid;
+    grid-template-columns:380px 1fr;
+    height:calc(100vh - 125px);
+}
+
+.sidebar{
+    background:#1e293b;
+    padding:20px;
+    overflow:auto;
+    color:white;
+}
+
+#map{
+    width:100%;
+    height:100%;
+}
+
+.section{
+    background:#273549;
+    border-radius:14px;
+    padding:15px;
+    margin-bottom:15px;
+}
+
+label{
+    display:block;
+    margin:8px 0;
+    color:#cbd5e1;
+    font-weight:bold;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    margin-bottom:10px;
+    background:#334155;
+    color:white;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    margin-bottom:10px;
+    background:#2563eb;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#1d4ed8;
+}
+
+.btn-green{
+    background:#16a34a;
+}
+
+.btn-orange{
+    background:#ea580c;
+}
+
+.route-card{
+    background:white;
+    color:#111827;
+    border-radius:14px;
+    padding:15px;
+    margin-top:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+.client{
+    background:#f8fafc;
+    padding:10px;
+    border-radius:8px;
+    margin-top:8px;
+    border-left:4px solid #2563eb;
+}
+
+.badge{
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:bold;
+    background:#dbeafe;
+    color:#1d4ed8;
+}
+
+.custom-marker{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-weight:bold;
+    border:2px solid white;
+}
+
+#estado{
+    background:#334155;
+    padding:12px;
+    border-radius:10px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+🚚 Planner
+</div>
+
+<div class="kpis">
+<div class="kpi" id="kpiClientes">Clientes: 0</div>
+<div class="kpi" id="kpiRutas">Rutas: 0</div>
+<div class="kpi" id="kpiTiempo">Tiempo total: 0 min</div>
+<div class="kpi" id="kpiPromedio">Promedio: 0 min</div>
+<div class="kpi" id="kpiPendientes">Pendientes: 0</div>
+</div>
+
+<div class="layout">
+
+<div class="sidebar">
+
+<div class="section">
+<h3>📂 Configuración</h3>
+
+<label>Importar Excel</label>
+<input type="file" id="fileInput">
+
+<button class="btn-green" onclick="descargarFormato()">Descargar formato</button>
+
+<label>Cantidad de rutas</label>
+<input type="number" id="numRutas" value="10">
+
+<label>Hora inicio</label>
+<input type="time" id="horaInicio" value="08:00">
+
+<label>Tiempo visita (min)</label>
+<input type="number" id="tiempoVisita" value="10">
+</div>
+
+<div class="section">
+<h3>⚙ Operación</h3>
+<button onclick="procesar()">Optimizar rutas</button>
+<button onclick="centrarMapa()">Centrar rutas</button>
+<button class="btn-orange" onclick="limpiarMapa()">Limpiar mapa</button>
+<button onclick="exportarExcel()">Exportar resultado</button>
+</div>
+
+<div class="section">
+<h3>📊 Estado</h3>
+<div id="estado">Esperando archivo...</div>
+</div>
+
+<div class="section">
+<h3>🛣 Detalle rutas</h3>
+<div id="panelRutas"></div>
+</div>
+
+</div>
+
+<div id="map"></div>
+
+</div>
+
+<script>
+
+let datos=[];
+let resultados=[];
+let capasMapa=[];
+
+const colores=["#2563eb","#dc2626","#16a34a","#f59e0b","#7c3aed","#0891b2","#ea580c","#be123c"];
+
+const map=L.map('map').setView([-12.0464,-77.0428],11);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+document.getElementById("fileInput").addEventListener("change",function(e){
+
+const file=e.target.files[0];
+const reader=new FileReader();
+
+reader.onload=function(evt){
+const workbook=XLSX.read(evt.target.result,{type:'binary'});
+const sheet=workbook.Sheets[workbook.SheetNames[0]];
+datos=XLSX.utils.sheet_to_json(sheet);
+
+document.getElementById("estado").innerHTML="Archivo cargado: "+datos.length+" clientes";
+document.getElementById("kpiClientes").innerHTML="Clientes: "+datos.length;
+document.getElementById("kpiPendientes").innerHTML="Pendientes: "+datos.length;
+};
+
+reader.readAsBinaryString(file);
+
+});
+
+function descargarFormato(){
+
+const plantilla=[
+{Codigo:"CLI001",Cliente:"Bodega Norte",Latitud:-11.9823,Longitud:-77.0721,Direccion:"Los Olivos"},
+{Codigo:"CLI002",Cliente:"Market Centro",Latitud:-12.0464,Longitud:-77.0428,Direccion:"Lima Centro"}
+];
+
+const ws=XLSX.utils.json_to_sheet(plantilla);
+const wb=XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb,ws,"Formato");
+
+XLSX.writeFile(wb,"Formato_Clientes.xlsx");
+
+}
+
+function sumarMinutos(hora,minutos){
+let [h,m]=hora.split(":").map(Number);
+let total=(h*60)+m+minutos;
+return `${String(Math.floor(total/60)).padStart(2,"0")}:${String(total%60).padStart(2,"0")}`;
+}
+
+async function matrizTiempos(lista){
+let coords=lista.map(c=>`${c.Longitud},${c.Latitud}`).join(";");
+const res=await fetch(`https://router.project-osrm.org/table/v1/driving/${coords}`);
+const data=await res.json();
+return data.durations;
+}
+
+function optimizarConMatriz(lista,matriz){
+let pendientes=[...Array(lista.length).keys()];
+let ruta=[];
+let actual=pendientes.shift();
+
+ruta.push(actual);
+
+while(pendientes.length){
+let mejor=pendientes[0];
+let menor=Infinity;
+
+pendientes.forEach(i=>{
+if(matriz[actual][i]<menor){
+menor=matriz[actual][i];
+mejor=i;
+}
+});
+
+pendientes=pendientes.filter(x=>x!==mejor);
+ruta.push(mejor);
+actual=mejor;
+}
+
+return ruta.map(i=>lista[i]);
+}
+
+async function geometriaRuta(lista){
+let coords=lista.map(c=>`${c.Longitud},${c.Latitud}`).join(";");
+const res=await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`);
+const data=await res.json();
+return data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+}
+
+async function procesar(){
+
+if(datos.length===0){
+alert("Carga archivo");
+return;
+}
+
+resultados=[];
+document.getElementById("panelRutas").innerHTML="";
+limpiarMapa();
+
+let numRutas=parseInt(document.getElementById("numRutas").value);
+let tiempoVisita=parseInt(document.getElementById("tiempoVisita").value);
+let horaInicio=document.getElementById("horaInicio").value;
+
+datos.sort((a,b)=>b.Latitud-a.Latitud);
+
+let porRuta=Math.floor(datos.length/numRutas);
+let sobrantes=datos.length%numRutas;
+let inicio=0;
+let tiempoTotal=0;
+
+for(let r=0;r<numRutas;r++){
+
+let cantidad=porRuta;
+if(r===numRutas-1) cantidad+=sobrantes;
+
+let grupo=datos.slice(inicio,inicio+cantidad);
+inicio+=cantidad;
+
+if(grupo.length===0) continue;
+
+let matriz=await matrizTiempos(grupo);
+let ordenados=optimizarConMatriz(grupo,matriz);
+let geometry=await geometriaRuta(ordenados);
+
+let acumulado=0;
+let html="";
+
+for(let i=0;i<ordenados.length;i++){
+
+let traslado=0;
+
+if(i>0){
+let idxAnterior=grupo.findIndex(x=>x.Cliente===ordenados[i-1].Cliente);
+let idxActual=grupo.findIndex(x=>x.Cliente===ordenados[i].Cliente);
+
+traslado=Math.round(matriz[idxAnterior][idxActual]/60);
+acumulado+=traslado;
+}
+
+acumulado+=tiempoVisita;
+
+let eta=sumarMinutos(horaInicio,acumulado);
+let cliente=ordenados[i];
+
+let marker=L.marker([cliente.Latitud,cliente.Longitud],{
+icon:L.divIcon({
+className:"",
+html:`<div class="custom-marker" style="background:${colores[r]}">${i+1}</div>`
+})
+}).addTo(map);
+
+marker.bindPopup(`
+<b>${cliente.Cliente}</b><br>
+Código: ${cliente.Codigo}<br>
+Dirección: ${cliente.Direccion}<br>
+Lat: ${cliente.Latitud}<br>
+Lng: ${cliente.Longitud}<br>
+ETA: ${eta}
+`);
+
+capasMapa.push(marker);
+
+html+=`
+<div class="client">
+<span class="badge">Ruta ${r+1}</span><br>
+<b>${i+1}. ${cliente.Cliente}</b><br>
+Código: ${cliente.Codigo}<br>
+Traslado: ${traslado} min<br>
+ETA: ${eta}
+</div>
+`;
+
+resultados.push({
+Ruta:r+1,
+Orden:i+1,
+Codigo:cliente.Codigo,
+Cliente:cliente.Cliente,
+Latitud:cliente.Latitud,
+Longitud:cliente.Longitud,
+Direccion:cliente.Direccion,
+Tiempo_Traslado:traslado,
+Tiempo_Visita:tiempoVisita,
+ETA:eta
+});
+}
+
+tiempoTotal+=acumulado;
+
+let poly=L.polyline(geometry,{
+color:colores[r],
+weight:6,
+opacity:0.85
+}).addTo(map);
+
+capasMapa.push(poly);
+
+document.getElementById("panelRutas").innerHTML+=`
+<div class="route-card">
+<h3 style="color:${colores[r]}">Ruta ${r+1}</h3>
+${html}
+<b>Total: ${acumulado} min</b>
+</div>
+`;
+}
+
+document.getElementById("kpiRutas").innerHTML="Rutas: "+numRutas;
+document.getElementById("kpiTiempo").innerHTML="Tiempo total: "+tiempoTotal+" min";
+document.getElementById("kpiPromedio").innerHTML="Promedio: "+Math.round(tiempoTotal/numRutas)+" min";
+document.getElementById("kpiPendientes").innerHTML="Pendientes: 0";
+
+centrarMapa();
+
+document.getElementById("estado").innerHTML="Optimización completada";
+}
+
+function limpiarMapa(){
+capasMapa.forEach(layer=>map.removeLayer(layer));
+capasMapa=[];
+}
+
+function centrarMapa(){
+if(capasMapa.length===0) return;
+let group=new L.featureGroup(capasMapa);
+map.fitBounds(group.getBounds(),{padding:[30,30]});
+}
+
+function exportarExcel(){
+const ws=XLSX.utils.json_to_sheet(resultados);
+const wb=XLSX.utils.book_new();
+XLSX.utils.book_append_sheet(wb,ws,"Rutas");
+XLSX.writeFile(wb,"Planner_Resultado.xlsx");
+}
+
+</script>
+
+</body>
+</html>
