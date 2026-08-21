@@ -1,0 +1,58 @@
+{
+    "wedding": {
+        "bride": "Margie",
+        "groom": "Cristian",
+        "date": "2026-09-30T16:00:00",
+        "hashtag": "#MargieYCristian2026"
+    },
+    "events": {
+        "ceremony": {
+            "name": "Ceremonia Religiosa",
+            "place": "Iglesia San José",
+            "address": "Av. Principal 123, Ciudad",
+            "time": "4:00 PM",
+            "mapUrl": "https://maps.google.com/?q=-12.0464,-77.0428"
+        },
+        "reception": {
+            "name": "Recepción y Fiesta",
+            "place": "Salón de Eventos La Hacienda",
+            "address": "Calle Secundaria 456, Ciudad",
+            "time": "6:00 PM",
+            "mapUrl": "https://maps.google.com/?q=-12.0474,-77.0438"
+        }
+    },
+    "gifts": {
+        "yape": {
+            "name": "Margie",
+            "number": "999 888 777"
+        },
+        "plin": {
+            "name": "Cristian",
+            "number": "988 777 666"
+        },
+        "bank": {
+            "name": "Cristian",
+            "bank": "Banco de Crédito",
+            "account": "123-456-789-0123",
+            "cci": "0021234567890123456"
+        },
+        "lists": [
+            "tienda1.com/mipedido",
+            "tienda2.com/mipedido"
+        ]
+    },
+    "parents": {
+        "bride": {
+            "father": "Pendiente",
+            "mother": "Pendiente"
+        },
+        "groom": {
+            "father": "Pendiente",
+            "mother": "Pendiente"
+        }
+    },
+    "dressCode": {
+        "style": "Elegante / Formal",
+        "colors": ["#2c3e50", "#8e44ad", "#bdc3c7"]
+    }
+}

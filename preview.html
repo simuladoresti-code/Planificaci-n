@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista Previa - Invitación de Boda</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        
+        h1 {
+            color: #2c1810;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #8b5a2b;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+        
+        .phone-mockup {
+            width: 280px;
+            height: 560px;
+            background: #1a1a1a;
+            border-radius: 40px;
+            margin: 0 auto 30px;
+            padding: 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c1810 0%, #4a3728 100%);
+            border-radius: 30px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 20px;
+        }
+        
+        .phone-notch {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 25px;
+            background: #1a1a1a;
+            border-radius: 0 0 15px 15px;
+            z-index: 10;
+        }
+        
+        .phone-content {
+            text-align: center;
+        }
+        
+        .save-date {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #d4a574;
+            margin-bottom: 15px;
+        }
+        
+        .names {
+            font-size: 2rem;
+            color: #d4af37;
+            margin-bottom: 5px;
+        }
+        
+        .ampersand {
+            font-size: 1.2rem;
+            color: #d4a574;
+            margin-bottom: 5px;
+        }
+        
+        .date-display {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        
+        .date-box {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        
+        .date-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #d4af37;
+        }
+        
+        .date-label {
+            font-size: 0.5rem;
+            color: #d4a574;
+            text-transform: uppercase;
+        }
+        
+        .features {
+            text-align: left;
+            margin-top: 20px;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .feature:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8b5a2b, #d4a574);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .feature-text h3 {
+            color: #2c1810;
+            font-size: 1rem;
+            margin-bottom: 3px;
+        }
+        
+        .feature-text p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #8b5a2b, #d4a574);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .instructions {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #2c1810;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ul {
+            list-style: none;
+        }
+        
+        .instructions li {
+            padding: 8px 0;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions li::before {
+            content: "✓";
+            color: #27ae60;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Invitación de Boda</h1>
+        <p class="subtitle">Vista previa de tu invitación digital</p>
+        
+        <div class="phone-mockup">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+                <div class="phone-content">
+                    <p class="save-date">Guarda la Fecha</p>
+                    <div class="names">María</div>
+                    <div class="ampersand">&</div>
+                    <div class="names">Carlos</div>
+                    
+                    <div class="date-display">
+                        <div class="date-box">
+                            <div class="date-number">15</div>
+                            <div class="date-label">Días</div>
+                        </div>
+                        <div class="date-box">
+                            <div class="date-number">03</div>
+                            <div class="date-label">Mes</div>
+                        </div>
+                        <div class="date-box">
+                            <div class="date-number">25</div>
+                            <div class="date-label">Año</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">💌</div>
+                <div class="feature-text">
+                    <h3>Invitación Cordial</h3>
+                    <p>Mensaje personalizado con diseño elegante</p>
+                </div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📅</div>
+                <div class="feature-text">
+                    <h3>Confirmación de Asistencia</h3>
+                    <p>Formulario interactivo RSVP con opciones</p>
+                </div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🎁</div>
+                <div class="feature-text">
+                    <h3>Mesa de Regalos</h3>
+                    <p>Yape, Plin, transferencia y listas</p>
+                </div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📸</div>
+                <div class="feature-text">
+                    <h3>Galería de Fotos</h3>
+                    <p>Tu historia de amor con timeline</p>
+                </div>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">📱</div>
+                <div class="feature-text">
+                    <h3>Optimizado para Móvil</h3>
+                    <p>Diseño responsive y profesional</p>
+                </div>
+            </div>
+        </div>
+        
+        <a href="index.html" class="btn">Ver Invitación Completa</a>
+        
+        <div class="instructions">
+            <h3>📋 Pasos para Personalizar:</h3>
+            <ul>
+                <li>Abre el archivo <strong>config.json</strong> para cambiar datos básicos</li>
+                <li>Edita <strong>index.html</strong> para cambiar nombres y fechas</li>
+                <li>Modifica <strong>styles.css</strong> para cambiar colores</li>
+                <li>Agrega tus fotos en la carpeta <strong>fotos/</strong></li>
+                <li>Agrega música en la carpeta <strong>music/</strong></li>
+                <li>Actualiza números de Yape y transferencia</li>
+                <li>Abre <strong>index.html</strong> en tu navegador móvil</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

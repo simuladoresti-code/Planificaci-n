@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Rápida - Invitación de Boda</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #8b5a2b;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            color: #2c1810;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .card p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .code {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin-bottom: 15px;
+        }
+        .highlight {
+            color: #dcdcaa;
+        }
+        .string {
+            color: #ce9178;
+        }
+        .comment {
+            color: #6a9955;
+        }
+        .steps {
+            list-style: none;
+            counter-reset: step;
+        }
+        .steps li {
+            counter-increment: step;
+            padding: 10px 0 10px 40px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+        .steps li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            width: 30px;
+            height: 30px;
+            background: #8b5a2b;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .steps li:last-child {
+            border-bottom: none;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #8b5a2b;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        .btn:hover {
+            background: #6d4720;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .grid-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .grid-item h3 {
+            color: #8b5a2b;
+            margin-bottom: 10px;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Guía Rápida de Personalización</h1>
+        
+        <div class="card">
+            <h2>1. Cambiar Nombres y Fecha</h2>
+            <p>Abre <strong>index.html</strong> y busca los nombres:</p>
+            <div class="code">
+                <span class="comment">&lt;!-- Cambiar estos nombres --&gt;</span><br>
+                &lt;span class="<span class="highlight">name</span>"&gt;<span class="string">María</span>&lt;/span&gt;<br>
+                &lt;span class="<span class="highlight">name</span>"&gt;<span class="string">Carlos</span>&lt;/span&gt;
+            </div>
+            <p>Para la fecha, edita <strong>script.js</strong>:</p>
+            <div class="code">
+                <span class="comment">// Cambia la fecha de tu boda</span><br>
+                <span class="keyword">const</span> WEDDING_DATE = <span class="keyword">new</span> Date(<span class="string">'2025-03-15T16:00:00'</span>);
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>2. Cambiar Colores</h2>
+            <p>Edita <strong>styles.css</strong> y modifica las variables:</p>
+            <div class="code">
+                <span class="comment">:root {</span><br>
+                <span class="comment">  --primary-color: #8b5a2b;</span> <span class="comment">/* Marrón elegante */</span><br>
+                <span class="comment">  --secondary-color: #d4a574;</span> <span class="comment">/* Dorado suave */</span><br>
+                <span class="comment">  --gold: #d4af37;</span> <span class="comment">/* Dorado brillante */</span><br>
+                <span class="comment">}</span>
+            </div>
+            
+            <div class="success">
+                <strong>💡 Consejo:</strong> Puedes usar herramientas como <a href="https://coolors.co" target="_blank">Coolors</a> o <a href="https://color.adobe.com" target="_blank">Adobe Color</a> para elegir tu paleta.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>3. Agregar Fotos</h2>
+            <p>Sigue estos pasos para agregar tus fotos:</p>
+            <ol class="steps">
+                <li>
+                    <strong>Crea la carpeta de fotos</strong><br>
+                    Ya está creada: <code>fotos/</code>
+                </li>
+                <li>
+                    <strong>Coloca tus imágenes</strong><br>
+                    - Foto principal: <code>fotos/novios.jpg</code><br>
+                    - Fotos de galería: <code>fotos/galeria/</code>
+                </li>
+                <li>
+                    <strong>Edita index.html</strong><br>
+                    Reemplaza los placeholders por tus imágenes
+                </li>
+                <li>
+                    <strong>Comprime las imágenes</strong><br>
+                    Usa <a href="https://tinypng.com" target="_blank">TinyPNG</a> para optimizar
+                </li>
+            </ol>
+            
+            <div class="warning">
+                <strong>⚠️ Importante:</strong> Las imágenes deben ser cuadradas (1:1) para mejor visualización.
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>4. Actualizar Datos de Regalos</h2>
+            <p>En <strong>index.html</strong>, busca la sección <code>#gifts</code> y actualiza:</p>
+            <div class="grid">
+                <div class="grid-item">
+                    <h3>Yape</h3>
+                    <p>Número: 999 888 777</p>
+                    <p>Nombre: María García</p>
+                </div>
+                <div class="grid-item">
+                    <h3>Plin</h3>
+                    <p>Número: 988 777 666</p>
+                    <p>Nombre: Carlos Pérez</p>
+                </div>
+                <div class="grid-item">
+                    <h3>Transferencia</h3>
+                    <p>Cuenta: 123-456-789</p>
+                    <p>CCI: 002123456789</p>
+                </div>
+                <div class="grid-item">
+                    <h3>Listas</h3>
+                    <p>tienda1.com/pedido</p>
+                    <p>tienda2.com/pedido</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>5. Configurar WhatsApp</h2>
+            <p>Edita <strong>script.js</strong> con tu número:</p>
+            <div class="code">
+                <span class="comment">// Tu número con código de país</span><br>
+                <span class="keyword">const</span> WHATSAPP_NUMBER = <span class="string">'51999888777'</span>;
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>6. Agregar Música</h2>
+            <p>Coloca tu archivo de música en la carpeta <code>music/</code>:</p>
+            <div class="code">
+                music/<br>
+                └── wedding-song.mp3
+            </div>
+            <p>Asegúrate de que el archivo se llame exactamente <strong>wedding-song.mp3</strong></p>
+        </div>
+        
+        <div class="card">
+            <h2>7. Probar la Invitación</h2>
+            <p>Abre el archivo <strong>index.html</strong> en tu navegador móvil:</p>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="index.html" class="btn">Ver Invitación</a>
+                <a href="preview.html" class="btn">Vista Previa</a>
+                <a href="config.json" class="btn">Configuración</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>8. Compartir tu Invitación</h2>
+            <p>Una vez personalizada, puedes compartirla por:</p>
+            <div style="text-align: center; margin-top: 15px;">
+                <div class="btn" style="background: #25d366;">WhatsApp</div>
+                <div class="btn" style="background: #1877f2;">Facebook</div>
+                <div class="btn" style="background: #e4405f;">Instagram</div>
+            </div>
+            
+            <div class="success">
+                <strong>💡 Consejo:</strong> Sube los archivos a <a href="https://netlify.com" target="_blank">Netlify</a> o <a href="https://pages.github.com" target="_blank">GitHub Pages</a> para obtener un enlace permanente.
+            </div>
+        </div>
+        
+        <div class="card" style="text-align: center;">
+            <h2>¿Necesitas Ayuda?</h2>
+            <p>Consulta el archivo <strong>README.md</strong> para más detalles.</p>
+            <p style="margin-top: 15px;">
+                <strong>¡Tu invitación está lista!</strong><br>
+                <span style="font-size: 2rem;">💒 💕</span>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
